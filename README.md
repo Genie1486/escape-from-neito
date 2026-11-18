@@ -111,6 +111,8 @@ cd escape-from-neito
 
 ![3단계 브라우저 회원가입 화면](./images/step3_signup.png)
 
+![3단계 브라우저 홈 화면](./images/step3_home.png)
+
 ### 4단계: 강의실 퇴실 시 `end_librechat.bat` 실행 (필수)
 공용 PC에 내 API 키와 대화 기록이 남지 않도록, 자리를 비울 때 반드시 **`end_librechat.bat`**을 더블클릭합니다.
 * 실행 중인 Docker 컨테이너 및 로컬 DB 볼륨 삭제 (`docker compose down -v`)
