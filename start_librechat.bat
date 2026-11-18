@@ -6,20 +6,40 @@ echo ====================================================
 echo   Codyssey x LibreChat Auto Setup ^& Launcher
 echo ====================================================
 
-:: [Step 1] Check if Docker Desktop is installed
+:: [Step 1] Locate Docker Desktop executable across common paths and relative to docker CLI
+set "DOCKER_EXE="
+if exist "C:\Program Files\Docker\Docker\Docker Desktop.exe" set "DOCKER_EXE=C:\Program Files\Docker\Docker\Docker Desktop.exe"
+if not defined DOCKER_EXE if exist "%LocalAppData%\Programs\Docker\Docker\Docker Desktop.exe" set "DOCKER_EXE=%LocalAppData%\Programs\Docker\Docker\Docker Desktop.exe"
+if not defined DOCKER_EXE if exist "%LocalAppData%\Programs\DockerDesktop\Docker Desktop.exe" set "DOCKER_EXE=%LocalAppData%\Programs\DockerDesktop\Docker Desktop.exe"
+if not defined DOCKER_EXE (
+    for /f "delims=" %%i in ('where docker 2^>nul') do (
+        if not defined DOCKER_EXE if exist "%%~dpi..\..\Docker Desktop.exe" set "DOCKER_EXE=%%~dpi..\..\Docker Desktop.exe"
+    )
+)
+
+:: Guard: If Docker Desktop is not installed on this PC, open download page and exit
 where docker >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [ERROR] Docker Desktop is not installed. Opening download page...
+if %errorlevel% neq 0 if not defined DOCKER_EXE (
+    echo [ERROR] Docker Desktop is not installed on this PC.
+    echo         Opening the official download page. Please install it first!
     start https://www.docker.com/products/docker-desktop/
     pause
     exit /b
 )
 
-:: [Step 2] Start Docker Desktop if stopped, and wait until engine is ready
+:: [Step 2] Start Docker Desktop if engine is stopped, and wait until ready
 docker info >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [INFO] Docker Engine is stopped. Starting Docker Desktop...
-    start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+    if defined DOCKER_EXE (
+        echo [INFO] Docker Engine is stopped. Starting Docker Desktop...
+        start "" "%DOCKER_EXE%"
+    ) else (
+        echo [ERROR] Docker CLI found, but Docker Desktop.exe could not be located.
+        echo         Please start Docker manually or reinstall Docker Desktop.
+        start https://www.docker.com/products/docker-desktop/
+        pause
+        exit /b
+    )
 )
 
 :WAIT_DOCKER
@@ -31,6 +51,16 @@ if %errorlevel% neq 0 (
 )
 echo [OK] Docker Engine is running!
 
+:: Check if Git is installed
+where git >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [ERROR] Git is not installed on this PC.
+    echo         Opening the official download page. Please install Git first!
+    start https://git-scm.com/downloads/win
+    pause
+    exit /b
+)
+
 :: [Step 3] Clone LibreChat repository if not exists
 if not exist "LibreChat" (
     echo [1/4] Cloning LibreChat repository...
@@ -38,7 +68,14 @@ if not exist "LibreChat" (
 )
 cd LibreChat
 
-:: [Step 4] Find an available port starting from 3080
+:: [Step 4] If .env already exists, reuse its configured port and skip setup
+if exist ".env" (
+    for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env') do set APP_PORT=%%a
+    if not defined APP_PORT set APP_PORT=3080
+    goto START_CONTAINERS
+)
+
+:: [Step 5] Find an available port starting from 3080 (only for fresh setup)
 set APP_PORT=3080
 :CHECK_PORT
 netstat -ano | findstr ":%APP_PORT% " | findstr "LISTENING" >nul
@@ -48,9 +85,6 @@ if %errorlevel% equ 0 (
     goto CHECK_PORT
 )
 echo [OK] Using available port: %APP_PORT%
-
-:: [Step 5] Skip setup if .env already exists
-if exist ".env" goto START_CONTAINERS
 
 echo [2/4] Configuring security files...
 copy .env.example .env >nul

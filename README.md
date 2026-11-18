@@ -63,7 +63,7 @@
 
 ## 4. 사전 준비물 및 레포지토리 구성
 
-* **사전 설치 필요:** [Git for Windows](https://git-scm.com/)
+* **사전 설치 필요:** [Git for Windows](https://git-scm.com/), [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 * **레포지토리 내부 구조:**
 
 ```text
