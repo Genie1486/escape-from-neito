@@ -101,6 +101,7 @@ cd escape-from-neito
 1. 내려받은 폴더 안의 **`start_librechat.bat`** 파일을 더블클릭합니다. (Docker Desktop이 꺼져 있다면 자동으로 켜고 엔진이 준비될 때까지 대기합니다.)
 2. 터미널 창에 안내가 뜨면 발급받은 **Anthropic API 키**와 **OpenAI API 키**를 각각 붙여넣고 `Enter`를 누릅니다. *(사용하지 않을 키는 그냥 `Enter`를 눌러 건너뛸 수 있습니다.)*
    * 🔒 보안을 위해 키를 입력하는 즉시 **윈도우 클립보드 및 `Win + V` 복사 기록이 자동으로 삭제**됩니다.
+3. 브라우저가 열리면 콘솔창은 닫아도 됩니다. (Enter 입력)
 
 ![2단계 start 배치파일 실행 화면](./images/step2_start_bat.png)
 

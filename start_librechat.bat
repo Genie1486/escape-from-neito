@@ -38,7 +38,18 @@ if not exist "LibreChat" (
 )
 cd LibreChat
 
-:: [Step 4] Skip setup if .env already exists
+:: [Step 4] Find an available port starting from 3080
+set APP_PORT=3080
+:CHECK_PORT
+netstat -ano | findstr ":%APP_PORT% " | findstr "LISTENING" >nul
+if %errorlevel% equ 0 (
+    echo [INFO] Port %APP_PORT% is already in use. Trying next port...
+    set /a APP_PORT+=1
+    goto CHECK_PORT
+)
+echo [OK] Using available port: %APP_PORT%
+
+:: [Step 5] Skip setup if .env already exists
 if exist ".env" goto START_CONTAINERS
 
 echo [2/4] Configuring security files...
@@ -67,8 +78,9 @@ if "%ANTHROPIC_KEY%"=="" if "%OPENAI_KEY%"=="" (
     exit /b
 )
 
-:: Write API keys and endpoints to .env
+:: Write port, API keys, and endpoints to .env
 echo.>> .env
+echo PORT=%APP_PORT%>> .env
 if not "%ANTHROPIC_KEY%"=="" echo CODYSSEY_ANTHROPIC_KEY=%ANTHROPIC_KEY%>> .env
 if not "%ANTHROPIC_KEY%"=="" echo CODYSSEY_ANTHROPIC_URL=https://copa.codyssey.kr>> .env
 if not "%OPENAI_KEY%"=="" echo CODYSSEY_OPENAI_KEY=%OPENAI_KEY%>> .env
@@ -120,15 +132,15 @@ echo         source: ./librechat.yaml>> docker-compose.override.yml
 echo         target: /app/librechat.yaml>> docker-compose.override.yml
 
 :START_CONTAINERS
-:: [Step 5] Launch containers and open browser after 20s warmup
+:: [Step 6] Launch containers and open browser after 20s warmup
 echo [3/4] Starting Docker containers...
 docker compose up -d
 
 echo [4/4] Waiting 20 seconds for web server startup...
 timeout /t 20 /nobreak >nul
-start http://localhost:3080
+start http://localhost:%APP_PORT%
 
 echo ====================================================
-echo   DONE! Open http://localhost:3080
+echo   DONE! Open http://localhost:%APP_PORT%
 echo ====================================================
 pause
