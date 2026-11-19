@@ -68,14 +68,17 @@ if not exist "LibreChat" (
 )
 cd LibreChat
 
-:: [Step 4] If .env already exists, reuse its configured port and skip setup
-if exist ".env" (
-    for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env') do set APP_PORT=%%a
-    if not defined APP_PORT set APP_PORT=3080
-    goto START_CONTAINERS
-)
+:: [Step 4] Check if .env already exists AND contains a valid API key
+if not exist ".env" goto FRESH_SETUP
+findstr /r "^CODYSSEY_.*_KEY=." .env >nul 2>nul
+if %errorlevel% neq 0 goto FRESH_SETUP
 
-:: [Step 5] Find an available port starting from 3080 (only for fresh setup)
+for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env') do set APP_PORT=%%a
+if not defined APP_PORT set APP_PORT=3080
+goto START_CONTAINERS
+
+:FRESH_SETUP
+:: [Step 5] Find an available port starting from 3080
 set APP_PORT=3080
 :CHECK_PORT
 netstat -ano | findstr ":%APP_PORT% " | findstr "LISTENING" >nul
@@ -93,15 +96,19 @@ copy docker-compose.override.yml.example docker-compose.override.yml >nul
 set "ANTHROPIC_KEY="
 set "OPENAI_KEY="
 
-:: Prompt for API keys and immediately wipe Windows clipboard + Win+V history
+:: Prompt for API keys directly from CON and immediately wipe clipboard
 echo.
-set /p ANTHROPIC_KEY="Paste Codyssey ANTHROPIC API Key (or press Enter to skip): "
-echo off | clip
-powershell -NoProfile -Command "[Windows.ApplicationModel.DataTransfer.Clipboard, Windows, ContentType = WindowsRuntime]::ClearHistory()" >nul 2>nul
+set /p ANTHROPIC_KEY="Paste Codyssey ANTHROPIC API Key (or press Enter to skip): " < CON
+if not "%ANTHROPIC_KEY%"=="" (
+    echo off | clip
+    powershell -NoProfile -Command "[Windows.ApplicationModel.DataTransfer.Clipboard, Windows, ContentType = WindowsRuntime]::ClearHistory()" >nul 2>nul
+)
 
-set /p OPENAI_KEY="Paste Codyssey OPENAI API Key (or press Enter to skip): "
-echo off | clip
-powershell -NoProfile -Command "[Windows.ApplicationModel.DataTransfer.Clipboard, Windows, ContentType = WindowsRuntime]::ClearHistory()" >nul 2>nul
+set /p OPENAI_KEY="Paste Codyssey OPENAI API Key (or press Enter to skip): " < CON
+if not "%OPENAI_KEY%"=="" (
+    echo off | clip
+    powershell -NoProfile -Command "[Windows.ApplicationModel.DataTransfer.Clipboard, Windows, ContentType = WindowsRuntime]::ClearHistory()" >nul 2>nul
+)
 echo [SECURITY] Clipboard history cleared.
 
 :: Guard: Exit if both keys were skipped
