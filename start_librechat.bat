@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title Codyssey LibreChat Launcher (Claude + OpenAI)
+title Codyssey LibreChat Launcher (Claude + OpenAI + Gemini)
 
 echo ====================================================
 echo   Codyssey x LibreChat Auto Setup ^& Launcher
@@ -98,13 +98,13 @@ set "OPENAI_KEY="
 
 :: Prompt for API keys directly from CON and immediately wipe clipboard
 echo.
-set /p ANTHROPIC_KEY="Paste Codyssey ANTHROPIC API Key (or press Enter to skip): " < CON
+set /p ANTHROPIC_KEY="Paste Codyssey ANTHROPIC API Key (Claude + Image/PDF, or Enter to skip): " < CON
 if not "%ANTHROPIC_KEY%"=="" (
     echo off | clip
     powershell -NoProfile -Command "[Windows.ApplicationModel.DataTransfer.Clipboard, Windows, ContentType = WindowsRuntime]::ClearHistory()" >nul 2>nul
 )
 
-set /p OPENAI_KEY="Paste Codyssey OPENAI API Key (or press Enter to skip): " < CON
+set /p OPENAI_KEY="Paste Codyssey OPENAI API Key (GPT + Gemini + Claude text, or Enter to skip): " < CON
 if not "%OPENAI_KEY%"=="" (
     echo off | clip
     powershell -NoProfile -Command "[Windows.ApplicationModel.DataTransfer.Clipboard, Windows, ContentType = WindowsRuntime]::ClearHistory()" >nul 2>nul
@@ -133,7 +133,7 @@ echo cache: true>> librechat.yaml
 echo endpoints:>> librechat.yaml
 echo   custom:>> librechat.yaml
 
-:: Register Claude endpoint only if ANTHROPIC_KEY was entered
+:: Register Claude endpoint only if ANTHROPIC_KEY was entered (supports Image/PDF attachments)
 if "%ANTHROPIC_KEY%"=="" goto SKIP_CLAUDE
 echo     - name: 'Codyssey-Claude'>> librechat.yaml
 echo       provider: 'anthropic'>> librechat.yaml
@@ -146,20 +146,29 @@ echo           - 'claude-sonnet-4'>> librechat.yaml
 echo           - 'claude-opus-4-7'>> librechat.yaml
 echo           - 'claude-opus-4-8'>> librechat.yaml
 echo       titleConvo: false>> librechat.yaml
-echo       modelDisplayLabel: 'Codyssey Claude'>> librechat.yaml
+echo       modelDisplayLabel: 'Codyssey Claude (Vision/PDF)'>> librechat.yaml
 :SKIP_CLAUDE
 
-:: Register OpenAI endpoint only if OPENAI_KEY was entered
+:: Register OpenAI-compatible endpoint if OPENAI_KEY was entered (supports GPT, Gemini, and Claude text)
 if "%OPENAI_KEY%"=="" goto SKIP_OPENAI
 echo     - name: 'Codyssey-OpenAI'>> librechat.yaml
 echo       apiKey: '${CODYSSEY_OPENAI_KEY}'>> librechat.yaml
 echo       baseURL: '${CODYSSEY_OPENAI_URL}'>> librechat.yaml
 echo       models:>> librechat.yaml
 echo         default:>> librechat.yaml
+echo           - 'gemini-3-flash'>> librechat.yaml
+echo           - 'gemini-3.1-flash-lite'>> librechat.yaml
+echo           - 'gemini-3.1-pro'>> librechat.yaml
 echo           - 'gpt-5-mini'>> librechat.yaml
+echo           - 'gpt-5.4-mini'>> librechat.yaml
 echo           - 'gpt-5.4'>> librechat.yaml
+echo           - 'gpt-5.5'>> librechat.yaml
+echo           - 'claude-haiku-4'>> librechat.yaml
+echo           - 'claude-sonnet-4'>> librechat.yaml
+echo           - 'claude-opus-4-7'>> librechat.yaml
+echo           - 'claude-opus-4-8'>> librechat.yaml
 echo       titleConvo: false>> librechat.yaml
-echo       modelDisplayLabel: 'Codyssey OpenAI'>> librechat.yaml
+echo       modelDisplayLabel: 'Codyssey All-in-One (GPT/Gemini/Claude)'>> librechat.yaml
 :SKIP_OPENAI
 
 :: Inject .env and mount librechat.yaml into the Docker container
